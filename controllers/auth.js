@@ -1,13 +1,14 @@
 // controllers/auth.js
 
-// Ensure you have run 'npm install bcryptjs jsonwebtoken'
-import { getDB } from '../index.js'; // To access the MongoDB connection
-import bcrypt from 'bcryptjs'; 
-// import jwt from 'jsonwebtoken'; // We will use this in handleLogin next
+import { getDB } from '../index.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
-// Assuming you will create a 'users' collection in your connectDB function if it doesn't exist
 const USERS_COLLECTION = 'users';
 
+/**
+ * Handles user registration: Hashing password, checking for existing user, and saving to DB.
+ */
 export const handleRegister = async (req, res) => {
     const { name, email, password, role } = req.body;
     
@@ -40,7 +41,7 @@ export const handleRegister = async (req, res) => {
 
         const result = await db.collection(USERS_COLLECTION).insertOne(newUser);
         
-        // 5. Success response (without sending the password hash back)
+        // 5. Success response
         res.status(201).json({ 
             message: 'User registered successfully. Proceed to login.',
             userId: result.insertedId 
@@ -52,17 +53,104 @@ export const handleRegister = async (req, res) => {
     }
 };
 
-// Placeholder handler for user login (TO BE IMPLEMENTED NEXT)
-export const handleLogin = (req, res) => {
-    res.status(501).json({ message: 'Login logic not yet implemented.' });
+/**
+ * Handles user login: Verifying password and generating a JWT token.
+ */
+export const handleLogin = async (req, res) => {
+    const { email, password } = req.body;
+
+    // 1. Basic Validation
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Please provide email and password.' });
+    }
+
+    try {
+        const db = getDB();
+
+        // 2. Find User by Email
+        const user = await db.collection(USERS_COLLECTION).findOne({ email });
+
+        if (!user) {
+            return res.status(401).json({ message: 'Invalid credentials.' });
+        }
+
+        // 3. Compare Password
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Invalid credentials.' });
+        }
+
+        // 4. Generate JWT Token
+        const payload = {
+            id: user._id,
+            role: user.role,
+            name: user.name
+        };
+        
+        const token = jwt.sign(
+            payload,
+            process.env.JWT_SECRET, // Ensure JWT_SECRET is set in your .env
+            { expiresIn: '1h' } 
+        );
+
+        // 5. Success response: Send the token and user details
+        res.json({
+            token,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role
+            },
+            message: 'Login successful.'
+        });
+
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ message: 'Internal server error during login.' });
+    }
 };
 
-// Placeholder handler for getting user details
-export const handleGetUser = (req, res) => {
-    res.status(501).json({ message: 'Get User logic not yet implemented.' });
+/**
+ * Handles fetching the current user's details (used after token verification by middleware).
+ */
+export const handleGetUser = async (req, res) => {
+    // The verifyAuth middleware attaches the decoded JWT payload to req.user
+    if (!req.user) {
+        // This should theoretically not happen if verifyAuth runs first, but is a safeguard.
+        return res.status(401).json({ message: 'Authentication required.' });
+    }
+    
+    // We already have the essential user data from the token (req.user)
+    // For this basic implementation, we return the data from the token.
+    // In complex apps, you might fetch fresh data from the DB using req.user.id.
+    try {
+        const db = getDB();
+        
+        // We need to use ObjectID for MongoDB lookups if we were to fetch by ID
+        // For simplicity, we'll just return the token payload data.
+        // If you need the full DB user data (excluding password), use this:
+        /*
+        const user = await db.collection(USERS_COLLECTION).findOne(
+            { _id: new ObjectId(req.user.id) },
+            { projection: { password: 0 } } // Exclude password field
+        );
+        if (!user) return res.status(404).json({ message: 'User not found.' });
+        */
+
+        res.json({ user: req.user, message: 'User data retrieved successfully.' });
+    } catch (error) {
+        console.error('Get User error:', error);
+        res.status(500).json({ message: 'Internal server error.' });
+    }
 };
 
-// Placeholder handler for logout
+/**
+ * Handles user logout (client-side token removal).
+ */
 export const handleLogout = (req, res) => {
-    res.status(501).json({ message: 'Logout logic not yet implemented.' });
+    // In a stateless JWT system, logout is generally a client-side action (deleting the token).
+    // The server just confirms the action.
+    res.json({ message: 'Logout successful. Please discard your token.' });
 };
