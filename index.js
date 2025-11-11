@@ -19,6 +19,18 @@ import {
   handleGetMyEnrollments,
 } from './routes/enrollments.js';
 
+import { // --- ADD THIS BLOCK ---
+  handleCreateReview,
+  handleGetCourseReviews,
+  handleDeleteReview,
+} from './routes/reviews.js';
+import { // --- ADD THIS BLOCK ---
+  handleUpdateProgress,
+  handleGetUserProgress,
+  handleGetCourseProgress,
+  handleGenerateCertificate,
+  handleGetUserCertificates,
+} from './routes/progress.js';
 let db = null;
 
 export function createServer() {
@@ -49,6 +61,26 @@ export function createServer() {
   app.post('/api/enrollments', handleEnroll);
   app.get('/api/enrollments/check/:courseId', handleCheckEnrollment);
   app.get('/api/enrollments/user/my-enrollments', handleGetMyEnrollments);
+  
+  // Enrollments routes
+  app.post('/api/enrollments', handleEnroll);
+  app.get('/api/enrollments/check/:courseId', handleCheckEnrollment);
+  app.get('/api/enrollments/user/my-enrollments', handleGetMyEnrollments);
+
+  // Reviews routes (--- ADD THIS SECTION ---)
+  app.post('/api/reviews', handleCreateReview);
+  app.get('/api/reviews/:courseId', handleGetCourseReviews);
+  app.delete('/api/reviews/:reviewId', handleDeleteReview);
+
+  // Progress routes (--- ADD THIS SECTION ---)
+  app.put('/api/progress', handleUpdateProgress);
+  app.get('/api/progress/:userId', handleGetUserProgress);
+  app.get('/api/progress/:courseId/:userId', handleGetCourseProgress);
+
+  // Certificate routes (--- ADD THIS SECTION ---)
+  app.post('/api/certificates/generate', handleGenerateCertificate);
+  app.get('/api/certificates/:userId', handleGetUserCertificates);
+  
     return app;
 }
 
