@@ -121,23 +121,3 @@ export function isDBConnected() {
   return db !== null;
 }
 
-// --------------------------------------------------------
-// >>> CRITICAL FIX: SERVER START BLOCK <<<
-// This is necessary to bind the application to a port and keep it running.
-// --------------------------------------------------------
-
-const PORT = process.env.PORT || 5000;
-
-async function startServer() {
-  const app = createServer();
-  const dbInstance = await connectDB(); 
-  
-  // Start the Express server and listen on the port
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-    console.log(`Database Status: ${dbInstance ? 'Connected' : 'Unavailable'}`);
-  });
-}
-
-// Execute the function to start the application
-startServer();
