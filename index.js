@@ -2,7 +2,22 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { MongoClient } from "mongodb";
-// ... (Omit route imports for now)
+// --- ROUTER IMPORTS ---
+import authRouter from './routes/auth.js'; 
+
+import {
+  handleGetCourses,
+  handleGetCourse,
+  handleCreateCourse,
+  handleUpdateCourse,
+  handleDeleteCourse,
+  handleGetMyCourses,
+} from './routes/courses.js';
+import {
+  handleEnroll,
+  handleCheckEnrollment,
+  handleGetMyEnrollments,
+} from './routes/enrollments.js';
 
 let db = null;
 
@@ -19,7 +34,21 @@ export function createServer() {
         const ping = process.env.PING_MESSAGE ?? "pong";
         res.json({ message: ping });
     });
+  app.use('/api/auth', authRouter);
 
+  // Courses routes
+  app.get('/api/courses', handleGetCourses);
+  app.get('/api/courses/featured', handleGetCourses); 
+  app.get('/api/courses/user/my-courses', handleGetMyCourses);
+  app.get('/api/courses/:id', handleGetCourse);
+  app.post('/api/courses', handleCreateCourse);
+  app.put('/api/courses/:id', handleUpdateCourse);
+  app.delete('/api/courses/:id', handleDeleteCourse);
+
+  // Enrollments routes
+  app.post('/api/enrollments', handleEnroll);
+  app.get('/api/enrollments/check/:courseId', handleCheckEnrollment);
+  app.get('/api/enrollments/user/my-enrollments', handleGetMyEnrollments);
     return app;
 }
 
