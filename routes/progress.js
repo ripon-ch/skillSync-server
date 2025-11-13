@@ -6,7 +6,7 @@ export async function handleUpdateProgress(req, res) {
     const db = getDB();
     if (!db) {
       return res.json({
-        success: true,
+        success,
         message: 'Progress saved locally',
         progress: { ...req.body, _id: new ObjectId() }
       });
@@ -33,11 +33,11 @@ export async function handleUpdateProgress(req, res) {
           updatedAt: new Date()
         }
       },
-      { upsert: true }
+      { upsert }
     );
 
     res.json({
-      success: true,
+      success,
       progressPercent,
       isCompleted,
       message: 'Progress updated'
@@ -74,10 +74,10 @@ export async function handleGetCourseProgress(req, res) {
     const db = getDB();
     if (!db) {
       return res.json({
-        progressPercent: 0,
-        isCompleted: false,
-        lessonsCompleted: 0,
-        totalLessons: 0
+        progressPercent,
+        isCompleted,
+        lessonsCompleted,
+        totalLessons
       });
     }
 
@@ -91,10 +91,10 @@ export async function handleGetCourseProgress(req, res) {
 
     if (!progress) {
       return res.json({
-        progressPercent: 0,
-        isCompleted: false,
-        lessonsCompleted: 0,
-        totalLessons: 0
+        progressPercent,
+        isCompleted,
+        lessonsCompleted,
+        totalLessons
       });
     }
 
@@ -113,7 +113,7 @@ export async function handleGenerateCertificate(req, res) {
     // Verify course is completed
     if (!db) {
       return res.json({
-        success: true,
+        success,
         certificateUrl: `data:text/plain,Certificate of Completion for ${courseName}`,
         message: 'Certificate generated locally'
       });
@@ -164,7 +164,7 @@ SkillSync Learning Platform
     });
 
     res.json({
-      success: true,
+      success,
       _id: certificateResult.insertedId,
       certificateContent,
       message: 'Certificate generated'
